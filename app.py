@@ -7,7 +7,7 @@ import google.generativeai as genai
 load_dotenv()
 
 # Configure API key from environment variable
-genai.configure(api_key=os.getenv("AIzaSyD_YourRealAPIKeyHere"))
+genai.configure(api_key=os.getenv("GENAI_API_KEY"))
 
 st.title("My AI Chat App")
 
@@ -22,9 +22,9 @@ if st.button("Send") and user_prompt:
     # Use a valid model
     model = genai.GenerativeModel("chat-bison")
 
-    # Prepare messages as TextPrompt objects
-    messages = [genai.TextPrompt(text=chat["text"]) for chat in st.session_state.chat_history]
-    messages.append(genai.TextPrompt(text=user_prompt))  # Add current user input
+    # Prepare messages as a list of strings (previous chat + new input)
+    messages = [chat["text"] for chat in st.session_state.chat_history]
+    messages.append(user_prompt)
 
     # Generate AI response
     response = model.generate_content(contents=messages)
