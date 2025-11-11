@@ -1,56 +1,37 @@
-import os
 import streamlit as st
-from dotenv import load_dotenv
-import google.generativeai as gen_ai
+import google.generativeai as genai
 
-# Load environment variables
-load_dotenv()
+# Configure API key
+genai.configure(api_key="YOUR_API_KEY")  # Replace with your actual API key
 
-# Configure Streamlit page
-st.set_page_config(
-    page_title="Chat with Gemini-Pro!",
-    page_icon="🧠",
-    layout="centered"
-)
+st.title("My AI Chat App")
 
-# Get API key
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+# Initialize session state for chat history
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
-# Validate API key
-if not GOOGLE_API_KEY:
-    st.error("❌ Google API key not found. Please set it in your .env file as GOOGLE_API_KEY.")
-    st.stop()
+# User input
+user_prompt = st.text_input("Enter your message:")
 
-# Configure Gemini model
-gen_ai.configure(api_key=GOOGLE_API_KEY)
-model = gen_ai.GenerativeModel("gemini-pro")
+if st.button("Send") and user_prompt:
+    # Use a valid model: chat-bison
+    model = genai.GenerativeModel("chat-bison")  
 
-# Function to translate roles
-def translate_role_for_streamlit(user_role):
-    return "assistant" if user_role == "model" else user_role
+    # Send message to the model
+    response = model.generate_content(
+        contents=st.session_state.chat_history + [{"type": "text", "text": user_prompt}],
+    )
 
-# Initialize chat session
-if "chat_session" not in st.session_state:
-    st.session_state.chat_session = model.start_chat(history=[])
+    # Extract model's reply
+    ai_reply = response.result[0].content[0].text
 
-# App title
-st.title("🤖 Gemini-Pro Chatbot")
+    # Store in chat history
+    st.session_state.chat_history.append({"type": "user", "text": user_prompt})
+    st.session_state.chat_history.append({"type": "ai", "text": ai_reply})
 
-# Display chat history
-for message in st.session_state.chat_session.history:
-    with st.chat_message(translate_role_for_streamlit(message.role)):
-        st.markdown(message.parts[0].text)
-
-# Chat input
-user_prompt = st.chat_input("Ask Gemini-Pro...")
-
-if user_prompt:
-    # Display user message
-    st.chat_message("user").markdown(user_prompt)
-
-    # Send to Gemini-Pro
-    gemini_response = st.session_state.chat_session.send_message(user_prompt)
-
-    # Display Gemini response
-    with st.chat_message("assistant"):
-        st.markdown(gemini_response.text)
+# Display chat
+for chat in st.session_state.chat_history:
+    if chat["type"] == "user":
+        st.markdown(f"**You:** {chat['text']}")
+    else:
+        st.markdown(f"**AI:** {chat['text']}")
