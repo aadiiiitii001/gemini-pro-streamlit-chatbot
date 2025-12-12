@@ -19,11 +19,11 @@ if "chat_history" not in st.session_state:
 user_prompt = st.text_input("Enter your message:")
 
 if st.button("Send") and user_prompt:
-    # Use a valid model
-    model = genai.GenerativeModel("chat-bison")
+    # Use a valid model for generate_content
+    model = genai.GenerativeModel("text-bison-001")
 
     # Prepare messages as a list of strings (previous chat + new input)
-    messages = [chat["text"] for chat in st.session_state.chat_history]
+    messages = [chat["text"] for chat in st.session_state.chat_history if chat["type"] == "user"]
     messages.append(user_prompt)
 
     # Generate AI response
