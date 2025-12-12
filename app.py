@@ -7,11 +7,11 @@ import google.generativeai as genai
 load_dotenv()
 
 # Configure API key from environment variable
-genai.configure(api_key=os.getenv("GENAI_API_KEY"))
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
-st.title("My AI Chat App")
+st.title("AI Chat App")
 
-# Initialize session state for chat history
+# Initialize chat history in session state
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
@@ -19,26 +19,24 @@ if "chat_history" not in st.session_state:
 user_prompt = st.text_input("Enter your message:")
 
 if st.button("Send") and user_prompt:
-    # Use a valid model for generate_content
-    model = genai.GenerativeModel("text-bison-001")
+    # Use chat-bison-001 for conversation
+    model = genai.ChatModel("chat-bison-001")
 
-    # Prepare messages as a list of strings (previous chat + new input)
-    messages = [chat["text"] for chat in st.session_state.chat_history if chat["type"] == "user"]
-    messages.append(user_prompt)
+    # Prepare messages for context (role + content)
+    messages = st.session_state.chat_history.copy()
+    messages.append({"role": "user", "content": user_prompt})
 
     # Generate AI response
-    response = model.generate_content(contents=messages)
-
-    # Extract AI's text reply
-    ai_reply = response.result[0].content[0].text
+    response = model.generate_message(messages=messages)
+    ai_reply = response.last.content[0].text
 
     # Update chat history
-    st.session_state.chat_history.append({"type": "user", "text": user_prompt})
-    st.session_state.chat_history.append({"type": "ai", "text": ai_reply})
+    st.session_state.chat_history.append({"role": "user", "content": user_prompt})
+    st.session_state.chat_history.append({"role": "assistant", "content": ai_reply})
 
 # Display chat history
 for chat in st.session_state.chat_history:
-    if chat["type"] == "user":
-        st.markdown(f"**You:** {chat['text']}")
+    if chat["role"] == "user":
+        st.markdown(f"**You:** {chat['content']}")
     else:
-        st.markdown(f"**AI:** {chat['text']}")
+        st.markdown(f"**AI:** {chat['content']}")
